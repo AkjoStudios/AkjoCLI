@@ -1,0 +1,51 @@
+name: '✨ Feature Enhancement'
+description: 'Suggest an enhancement for the functionality of an existing feature of AkjoNav!'
+title: '[Feature Enhancement] <title>'
+labels:
+  - 'status: none'
+  - 'type: enhancement'
+
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 'In which module is the feature you want to enhance?'
+      options:
+          - AkjoNav-Model
+          - AkjoNav-Base
+          - AkjoNav-Routing
+          - AkjoNav-MapServer
+          - AkjoNav-TileServer
+          - AkjoNav-Web
+          - AkjoNav-Mobile
+          - AkjoNav-WebMapper
+          - AkjoNav-DesktopMapper
+          - AkjoNav-OsmConverter
+      multiple: false
+    validations:
+      required: true
+
+  - type: input
+    id: feature
+    attributes:
+      label: 'Feature'
+      description: 'What feature do you want to enhance?'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 'Description'
+      description: 'A clear and concise description of what you want to happen.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 'Additional Context'
+      description: 'Add any other context or screenshots about the feature enhancement here.'
+      value: 'No additional context/screenshots.'
+    validations:
+      required: false

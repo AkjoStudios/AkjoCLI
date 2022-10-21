@@ -1,0 +1,41 @@
+name: '🔧 Testing Request'
+description: 'Request either new tests or changes to existing tests or request testing of a feature.'
+title: '[Testing Request] <title>'
+labels:
+  - 'status: none'
+  - 'type: testing'
+
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 'Which module would you like to request testing for?'
+      options:
+        - AkjoNav-Model
+        - AkjoNav-Base
+        - AkjoNav-Routing
+        - AkjoNav-MapServer
+        - AkjoNav-TileServer
+        - AkjoNav-Web
+        - AkjoNav-Mobile
+        - AkjoNav-WebMapper
+        - AkjoNav-DeskoptMapper
+        - AkjoNav-OsmConverter
+      multiple: false
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: 'Description'
+      description: 'A clear and concise description of what should be tested and how it should be tested.'
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: 'Additional Context'
+      description: 'Add any other context or screenshots about the feature request here.'
+      value: 'No additional context/screenshots.'
+    validations:
+      required: false

@@ -1,0 +1,15 @@
+name: '❔ Question'
+description: 'Do you have a question about AkjoNav? Ask us here!'
+title: '[Question] <title>'
+labels:
+  - 'status: none'
+  - 'type: question'
+
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: 'Question'
+      description: 'What is your question?'
+    validations:
+      required: true

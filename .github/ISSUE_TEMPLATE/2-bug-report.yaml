@@ -1,0 +1,95 @@
+name: '🐞 Bug Report'
+description: 'Report a bug in AkjoNav!'
+title: '[Bug Report] <title>'
+labels:
+  - 'status: none'
+  - 'type: bug'
+
+body:
+  - type: dropdown
+    id: module
+    attributes:
+      label: 'Which module is the source of the bug?'
+      options:
+        - AkjoNav-Model
+        - AkjoNav-Base
+        - AkjoNav-Routing
+        - AkjoNav-MapServer
+        - AkjoNav-TileServer
+        - AkjoNav-Web
+        - AkjoNav-Mobile
+        - AkjoNav-WebMapper
+        - AkjoNav-DeskoptMapper
+        - AkjoNav-OsmConverter
+      multiple: false
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: 'Version'
+      description: 'What version of AkjoNav is the bug in?'
+      value: 'v2022.1-dev1'
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: 'Environment'
+      description: 'On what ennvironment did you encounter the bug on? (e.g. OS, browser, versions, etc.)'
+      placeholder: |
+        - **OS**: Windows 11
+        - **Browser**: Chrome
+        - **Maven**: 3.6.3
+      value: 'No environment information.'
+      render: 'Markdown'
+    validations:
+      required: true
+
+  - type: textarea
+    id: current-behavior
+    attributes:
+      label: 'Current Behavior'
+      description: 'A concise description of what you are experiencing.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: 'Expected Behavior'
+      description: 'A concise description of what you expected to happen.'
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: 'Steps to Reproduce'
+      description: 'Steps to reproduce the behavior.'
+      placeholder: |
+        1. In this environment...
+        2. With this config...
+        3. Run '...'
+        4. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-message
+    attributes:
+      label: 'Exception / Error Message'
+      description: 'The exception/error message you are receiving.'
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 'Additional Context'
+      description: 'Add any other context or screenshots about the bug here.'
+      value: 'No additional context/screenshots.'
+    validations:
+      required: false

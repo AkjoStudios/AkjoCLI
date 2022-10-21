@@ -1,0 +1,26 @@
+[package]
+name = "PROJECT_ID"
+version = "0.0.0"
+description = "PROJECT_DESCRIPTION"
+authors = ["Lukas Küffer <lukas.kueffer@outlook.com>"]
+
+edition = "2021"
+
+readme = "README.md"
+license-file = "LICENSE"
+
+repository = "https://github.com/AkjoStudios/PROJECT_NAME"
+homepage = ""
+documentation = ""
+
+keywords = []
+categories = []
+
+[[bin]]
+name = "PROJECT_ID"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4.0.17", features = ["derive", "cargo"] }
+colored = "2"
+ctrlc = "3.2.3"
