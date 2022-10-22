@@ -6,7 +6,7 @@ use commands::{GreetCommand};
 use global::{GlobalOpts};
 
 #[derive(Debug, Parser)]
-#[clap(name = "PROJECT_NAME", author = "AkjoStudios", version, about)]
+#[clap(name = "AkjoCLI", author = "AkjoStudios", version, about)]
 pub struct App {
     #[clap(flatten)]
     global_opts: GlobalOpts,
