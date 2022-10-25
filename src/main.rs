@@ -1,9 +1,14 @@
-mod global;
-mod commands;
+use clap::{Parser};
 
-use clap::{Parser, Subcommand};
-use commands::{GreetCommand};
+mod global;
 use global::{GlobalOpts};
+
+mod commands;
+use commands::{NewCommand};
+
+mod command_def;
+use command_def::Commands;
+
 
 #[derive(Debug, Parser)]
 #[clap(name = "AkjoCLI", author = "AkjoStudios", version, about)]
@@ -15,20 +20,11 @@ pub struct App {
     command: Commands,
 }
 
-#[derive(Debug, Subcommand)]
-pub enum Commands {
-    #[clap(about = "Greets the given name or uses \"World\" as default.")]
-    Greet {
-        #[clap(default_value_t=String::from("World"))]
-        name: String
-    }
-}
-
 fn main() {
     let args = App::parse();
     match args.command {
-        Commands::Greet {name} => {
-            GreetCommand::new(name).run()
+        Commands::New {subject_type} => {
+            NewCommand::new(subject_type).run()
         }
     }
 }
