@@ -1,3 +1,3 @@
-pub mod greet;
+pub mod new;
 
-pub use greet::*;
+pub use new::*;
