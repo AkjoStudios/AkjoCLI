@@ -6,10 +6,15 @@ pub enum Commands {
     New {
         #[clap()]
         subject_type: String
-    }
-}
-
-#[derive(Debug, Subcommand)]
-pub enum SubjectTypes {
-    Project
+    },
+    #[clap(about = "Edits an existing instance of the given subject type (project, etc.)")]
+    Edit {
+        #[clap()]
+        subject_type: String
+    },
+    #[clap(about = "Deletes an existing instance of the given subject type (project, etc.)")]
+    Delete {
+        #[clap()]
+        subject_type: String
+    },
 }

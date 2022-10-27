@@ -2,9 +2,9 @@ use std::process::exit;
 
 use crate::subject_types::SubjectTypes;
 
-pub struct NewCommand {
+pub struct EditCommand {
     subject_type: SubjectTypes
-} impl NewCommand {
+} impl EditCommand {
     pub fn new(subject_type: SubjectTypes) -> Self {
         Self {
             subject_type
@@ -17,6 +17,6 @@ pub struct NewCommand {
     }
 
     pub fn run(&self) {
-        println!("Running new command on subject type \"{}\"!", self.subject_type.to_string());
+        println!("Running edit command on subject type \"{}\"!", self.subject_type.to_string());
     }
 }
