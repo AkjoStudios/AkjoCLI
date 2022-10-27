@@ -3,11 +3,13 @@ use std::process::exit;
 use crate::subject_types::SubjectTypes;
 
 pub struct EditCommand {
-    subject_type: SubjectTypes
+    subject_type: SubjectTypes,
+    subject_name: String,
 } impl EditCommand {
-    pub fn new(subject_type: SubjectTypes) -> Self {
+    pub fn new(subject_type: SubjectTypes, subject_name: String) -> Self {
         Self {
-            subject_type
+            subject_type,
+            subject_name,
         }
     }
 
@@ -17,6 +19,6 @@ pub struct EditCommand {
     }
 
     pub fn run(&self) {
-        println!("Running edit command on subject type \"{}\"!", self.subject_type.to_string());
+        println!("Editing existing {} called \"{}\"!", self.subject_type.to_string(), self.subject_name);
     }
 }

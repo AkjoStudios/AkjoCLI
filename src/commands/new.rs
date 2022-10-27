@@ -3,11 +3,13 @@ use std::process::exit;
 use crate::subject_types::SubjectTypes;
 
 pub struct NewCommand {
-    subject_type: SubjectTypes
+    subject_type: SubjectTypes,
+    subject_name: String,
 } impl NewCommand {
-    pub fn new(subject_type: SubjectTypes) -> Self {
+    pub fn new(subject_type: SubjectTypes, subject_name: String) -> Self {
         Self {
-            subject_type
+            subject_type,
+            subject_name,
         }
     }
 
@@ -17,6 +19,6 @@ pub struct NewCommand {
     }
 
     pub fn run(&self) {
-        println!("Running new command on subject type \"{}\"!", self.subject_type.to_string());
+        println!("Creating a new {} called \"{}\"!", self.subject_type.to_string(), self.subject_name);
     }
 }

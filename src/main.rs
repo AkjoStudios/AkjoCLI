@@ -28,21 +28,21 @@ pub struct App {
 fn main() {
     let args = App::parse();
     match args.command {
-        Commands::New {subject_type} => {
+        Commands::New {subject_type, subject_name} => {
             match SubjectTypes::from_str(&subject_type) {
-                Ok(subject_type) => NewCommand::new(subject_type).run(),
+                Ok(subject_type) => NewCommand::new(subject_type, subject_name).run(),
                 Err(err) => NewCommand::on_error(err),
             }
         }
-        Commands::Edit {subject_type} => {
+        Commands::Edit {subject_type, subject_name} => {
             match SubjectTypes::from_str(&subject_type) {
-                Ok(subject_type) => EditCommand::new(subject_type).run(),
+                Ok(subject_type) => EditCommand::new(subject_type, subject_name).run(),
                 Err(err) => EditCommand::on_error(err),
             }
         },
-        Commands::Delete {subject_type} => {
+        Commands::Delete {subject_type, subject_name} => {
             match SubjectTypes::from_str(&subject_type) {
-                Ok(subject_type) => DeleteCommand::new(subject_type).run(),
+                Ok(subject_type) => DeleteCommand::new(subject_type, subject_name).run(),
                 Err(err) => DeleteCommand::on_error(err),
             }
         },
