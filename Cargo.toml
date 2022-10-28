@@ -17,7 +17,7 @@ keywords = []
 categories = []
 
 [[bin]]
-name = "akjo-cli"
+name = "akjo"
 path = "src/main.rs"
 
 [dependencies]
