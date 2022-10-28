@@ -1,15 +1,18 @@
 use std::process::exit;
 
 use crate::subject_types::SubjectTypes;
+use crate::commands::DeleteCommandOpts;
 
 pub struct DeleteCommand {
     subject_type: SubjectTypes,
     subject_name: String,
+    options: DeleteCommandOpts,
 } impl DeleteCommand {
-    pub fn new(subject_type: SubjectTypes, subject_name: String) -> Self {
+    pub fn new(subject_type: SubjectTypes, subject_name: String, options: DeleteCommandOpts) -> Self {
         Self {
             subject_type,
             subject_name,
+            options,
         }
     }
 
@@ -19,6 +22,6 @@ pub struct DeleteCommand {
     }
 
     pub fn run(&self) {
-        println!("Deleting existing {} called \"{}\"!", self.subject_type.to_string(), self.subject_name);
+        println!("Deleting existing {} called \"{}\" with options {}!", self.subject_type.to_string(), self.subject_name, self.options.to_string());
     }
 }

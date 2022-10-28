@@ -1,4 +1,6 @@
-use clap::{Subcommand};
+use clap::Subcommand;
+
+use crate::commands::{NewCommandOpts, EditCommandOpts, DeleteCommandOpts};
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
@@ -8,6 +10,8 @@ pub enum Commands {
         subject_type: String,
         #[clap()]
         subject_name: String,
+        #[clap(flatten)]
+        options: NewCommandOpts,
     },
     #[clap(about = "Edits an existing instance of the given subject type (project, etc.)")]
     Edit {
@@ -15,6 +19,8 @@ pub enum Commands {
         subject_type: String,
         #[clap()]
         subject_name: String,
+        #[clap(flatten)]
+        options: EditCommandOpts,
     },
     #[clap(about = "Deletes an existing instance of the given subject type (project, etc.)")]
     Delete {
@@ -22,5 +28,7 @@ pub enum Commands {
         subject_type: String,
         #[clap()]
         subject_name: String,
+        #[clap(flatten)]
+        options: DeleteCommandOpts,
     },
 }
