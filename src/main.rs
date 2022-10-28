@@ -1,9 +1,18 @@
-mod global;
-mod commands;
+use std::str::FromStr;
 
-use clap::{Parser, Subcommand};
-use commands::{GreetCommand};
-use global::{GlobalOpts};
+use clap::Parser;
+
+pub mod global_opts;
+use global_opts::GlobalOpts;
+
+pub mod subject_types;
+use subject_types::SubjectTypes;
+
+pub mod command_def;
+use command_def::Commands;
+
+pub mod commands;
+use commands::{NewCommand, EditCommand, DeleteCommand};
 
 #[derive(Debug, Parser)]
 #[clap(name = "AkjoCLI", author = "AkjoStudios", version, about)]
@@ -15,20 +24,26 @@ pub struct App {
     command: Commands,
 }
 
-#[derive(Debug, Subcommand)]
-pub enum Commands {
-    #[clap(about = "Greets the given name or uses \"World\" as default.")]
-    Greet {
-        #[clap(default_value_t=String::from("World"))]
-        name: String
-    }
-}
-
 fn main() {
     let args = App::parse();
     match args.command {
-        Commands::Greet {name} => {
-            GreetCommand::new(name).run()
+        Commands::New {subject_type, subject_name, options} => {
+            match SubjectTypes::from_str(&subject_type) {
+                Ok(subject_type) => NewCommand::new(subject_type, subject_name, options).run(),
+                Err(err) => NewCommand::on_error(err),
+            }
         }
+        Commands::Edit {subject_type, subject_name, options} => {
+            match SubjectTypes::from_str(&subject_type) {
+                Ok(subject_type) => EditCommand::new(subject_type, subject_name, options).run(),
+                Err(err) => EditCommand::on_error(err),
+            }
+        },
+        Commands::Delete {subject_type, subject_name, options} => {
+            match SubjectTypes::from_str(&subject_type) {
+                Ok(subject_type) => DeleteCommand::new(subject_type, subject_name, options).run(),
+                Err(err) => DeleteCommand::on_error(err),
+            }
+        },
     }
 }

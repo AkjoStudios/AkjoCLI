@@ -1,6 +1,6 @@
 [package]
 name = "akjo-cli"
-version = "0.0.0"
+version = "0.0.1"
 description = "The command line interface for managing projects and other resources inside of AkjoStudios."
 authors = ["Lukas Küffer <lukas.kueffer@outlook.com>"]
 
@@ -17,7 +17,7 @@ keywords = []
 categories = []
 
 [[bin]]
-name = "akjo-cli"
+name = "akjo"
 path = "src/main.rs"
 
 [dependencies]
