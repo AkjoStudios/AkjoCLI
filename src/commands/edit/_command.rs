@@ -1,5 +1,8 @@
 use std::process::exit;
 
+use crate::actions::Action;
+use crate::actions::EditAction;
+
 use crate::subject_types::SubjectTypes;
 use crate::commands::EditCommandOpts;
 
@@ -22,6 +25,6 @@ pub struct EditCommand {
     }
 
     pub fn run(&self) {
-        println!("Editing existing {} called \"{}\" with options {}!", self.subject_type.to_string(), self.subject_name, self.options.to_string());
+        EditAction::new(&self.subject_name, &self.options).on_action(self.subject_type.get_action())
     }
 }

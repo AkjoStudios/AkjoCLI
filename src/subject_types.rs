@@ -1,5 +1,7 @@
 use std::str::FromStr;
 
+use crate::Actions;
+
 pub enum SubjectTypes {
     Project
 } impl FromStr for SubjectTypes {
@@ -16,5 +18,11 @@ pub enum SubjectTypes {
        match self {
         Self::Project => "project".to_string(),
        }
+    }
+} impl SubjectTypes {
+    pub fn get_action(&self) -> Actions {
+        match self {
+            Self::Project => Actions::OnProject,
+        }
     }
 }
