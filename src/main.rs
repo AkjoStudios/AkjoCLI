@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use clap::{Parser};
+use clap::Parser;
 
 pub mod global_opts;
 use global_opts::GlobalOpts;
