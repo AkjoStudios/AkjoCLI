@@ -26,7 +26,14 @@ pub struct NewAction<'a> {
     }
 
     fn make_big_kebab_case(str: &str) -> String {
-        let last_upper_word_start = str.graphemes(true).count() - str.graphemes(true).rev().position(|grapheme| grapheme.chars().all(Self::is_non_alphabetic_uppercase)).unwrap();
+        let last_upper_word_start = 
+            str.graphemes(true).count()
+            - str.graphemes(true)
+                .rev()
+                .position(
+                    |grapheme| 
+                    grapheme.chars().all(Self::is_non_alphabetic_uppercase)
+                ).unwrap();
 
         let last_word = str.get(last_upper_word_start..).unwrap();
         
@@ -101,20 +108,26 @@ pub struct NewAction<'a> {
             Question::input("project_name")
                 .message("Project Name (PascalCase | PascalCASE)")
                 .default(self.subject_name.to_case(Case::Pascal))
-                .validate(|project_name, _| if project_name.is_case(Case::Pascal) || NewAction::<'a>::make_big_kebab_case(project_name).is_case(Case::Pascal) {
-                    Ok(())
-                } else {
-                    Err("The name of your new project must be in PascalCase!".to_string())
-                })
+                .validate(
+                    |project_name, _| 
+                    if project_name.is_case(Case::Pascal) || NewAction::<'a>::make_big_kebab_case(project_name).is_case(Case::Pascal) {
+                        Ok(())
+                    } else {
+                        Err("The name of your new project must be in PascalCase!".to_string())
+                    }
+                )
                 .build(),
             Question::input("project_id")
                 .message("Project ID (kebab-case)")
                 .default(self.subject_name.to_case(Case::Kebab))
-                .validate(|project_id, _| if project_id.is_case(Case::Kebab) || NewAction::<'a>::make_big_kebab_case(project_id).is_case(Case::Kebab) {
-                    Ok(())
-                } else {
-                    Err("The id of your new project must be in kebab-case!".to_string())
-                })
+                .validate(
+                    |project_id, _| 
+                    if project_id.is_case(Case::Kebab) || NewAction::<'a>::make_big_kebab_case(project_id).is_case(Case::Kebab) {
+                        Ok(())
+                    } else {
+                        Err("The id of your new project must be in kebab-case!".to_string())
+                    }
+                )
                 .build()
         ]) {
             Ok(answers) => {
