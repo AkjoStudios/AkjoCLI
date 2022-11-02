@@ -46,15 +46,15 @@ pub struct NewAction<'a> {
     }
 } impl<'a> Action for NewAction<'a> {
     fn on_project(&self) {
-        if match prompt_one(Question::expand("start")
+        if match prompt_one(Question::select("start")
             .message("Are you ready to begin your new project?")
             .choices(vec![
-                ('y', "Yes"),
-                ('n', "No"),
+                "Yes",
+                "No",
             ]).build()
         ) {
-            Ok(answer) => match answer.as_expand_item() {
-                Some(answer) => answer.key == 'n',
+            Ok(answer) => match answer.as_list_item() {
+                Some(answer) => answer.text == "No",
                 None => true,
             },
             Err(_) => {
@@ -68,16 +68,16 @@ pub struct NewAction<'a> {
 
         Term::stdout().clear_screen().unwrap();
 
-        let project_type = match prompt_one(Question::expand("project_type")
+        let project_type = match prompt_one(Question::select("project_type")
             .message("Alright, let's get started by choosing the type of project you want to create.")
             .choices(vec![
-                ('e', "Empty Project"),
-                ('b', "Rust Binary"),
-                ('l', "Rust Library"),
-                ('c', "Rust CLI App"),
+                "Empty Project",
+                "Rust Binary",
+                "Rust Library",
+                "Rust CLI App",
             ]).build()
         ) {
-            Ok(answer) => match answer.as_expand_item() {
+            Ok(answer) => match answer.as_list_item() {
                 Some(answer) => ProjectTypes::from_name(&answer.text).unwrap(),
                 None => ProjectTypes::EmptyProject,
             },
@@ -87,11 +87,10 @@ pub struct NewAction<'a> {
             },
         };
 
-        match prompt_one(Question::expand("three_name_info")
+        match prompt_one(Question::select("three_name_info")
             .message("Great. We now have to define the ID, name and title of the project.")
-                .choice('a', "Alright!")
-                .default('a')
-                .build()
+            .choice("Alright!")
+            .build()
         ) {
             Ok(_) => {},
             Err(_) => {
