@@ -10,14 +10,14 @@ use subject_types::SubjectTypes;
 
 pub mod action_def;
 use action_def::Actions;
-
 pub mod actions;
 
 pub mod command_def;
 use command_def::Commands;
-
 pub mod commands;
 use commands::{NewCommand, EditCommand, DeleteCommand};
+
+pub mod util;
 
 #[derive(Debug, Parser)]
 #[clap(name = "AkjoCLI", author = "AkjoStudios", version, about)]
