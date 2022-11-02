@@ -47,7 +47,7 @@ pub struct NewAction<'a> {
 } impl<'a> Action for NewAction<'a> {
     fn on_project(&self) {
         if match prompt_one(Question::select("start")
-            .message("Are you ready to begin your new project?")
+            .message(format!("Are you ready to begin your new project called {}?", self.subject_name))
             .choices(vec![
                 "Yes",
                 "No",
