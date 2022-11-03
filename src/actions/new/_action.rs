@@ -159,5 +159,34 @@ pub struct NewAction<'a> {
                 exit(-1);
             }
         };
+
+        let project_description = match prompt_one(Question::input("project_description")
+            .message("We also need a short description for your project.")
+            .build()
+        ) {
+            Ok(answer) => match answer.as_string() {
+                Some(value) => value.to_string(),
+                None => String::new(),
+            },
+            Err(_) => {
+                eprintln!("Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        let project_version = match prompt_one(Question::input("project_version")
+            .message("And what version should your project start with?")
+            .default("0.1.0")
+            .build()
+        ) {
+            Ok(answer) => match answer.as_string() {
+                Some(value) => value.to_string(),
+                None => "0.1.0".to_string(),
+            },
+            Err(_) => {
+                eprintln!("Failed to parse question!");
+                exit(-1);
+            },
+        };
     }
 }
