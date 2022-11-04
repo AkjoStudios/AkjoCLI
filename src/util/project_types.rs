@@ -22,4 +22,22 @@ pub enum ProjectTypes {
             _ => Err(()),
         }
     }
- }
+
+    pub fn get_all_names() -> Vec<String> {
+        vec![
+            ProjectTypes::EmptyProject.get_name(),
+            ProjectTypes::EmptyRustBinary.get_name(),
+            ProjectTypes::EmptyRustLibrary.get_name(),
+            ProjectTypes::RustCliApp.get_name(),
+        ]
+    }
+
+    pub fn get_template_repo(self) -> String {
+        match self {
+            ProjectTypes::EmptyProject => "EmptyProjectTemplate".to_string(),
+            ProjectTypes::EmptyRustBinary => "EmptyRustBinaryProjectTemplate".to_string(),
+            ProjectTypes::EmptyRustLibrary => "EmptyRustLibraryProjectTemplate".to_string(), 
+            ProjectTypes::RustCliApp => "EmptyRustCliAppTemplate".to_string(),
+        }
+    }
+}

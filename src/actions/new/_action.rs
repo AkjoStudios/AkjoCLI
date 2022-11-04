@@ -1,14 +1,27 @@
+use std::env;
+use std::path::Path;
 use std::process::exit;
 
+use colored::Colorize;
+use email_address::EmailAddress;
+
+use inquire::validator::Validation;
+use inquire::{Select, Text, CustomUserError};
 use console::Term;
+
 use convert_case::{Casing, Case};
-use requestty::{Question, prompt_one, prompt};
+use octocrab::Octocrab;
+use tokio::runtime::Handle;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::actions::Action;
 use crate::commands::NewCommandOpts;
 
-use crate::util::ProjectTypes;
+use crate::util::{ProjectTypes, FilePathCompleter};
+
+use futures::executor::block_on;
+
+use spinoff::{Spinner, Spinners, Color};
 
 pub struct NewAction<'a> {
     subject_name: &'a String,
@@ -25,7 +38,7 @@ pub struct NewAction<'a> {
         !(char.is_alphabetic() && char.is_uppercase())
     }
 
-    fn make_big_kebab_case(str: &str) -> String {
+    fn make_big_pascal_case(str: &str) -> String {
         let last_upper_word_start = 
             str.graphemes(true).count()
             - str.graphemes(true)
@@ -37,7 +50,6 @@ pub struct NewAction<'a> {
 
         let last_word = str.get(last_upper_word_start..).unwrap();
         
-        println!("last_word: {}", last_word);
         if last_word.is_empty() { 
             str.to_string()
         } else {
@@ -46,147 +58,247 @@ pub struct NewAction<'a> {
     }
 } impl<'a> Action for NewAction<'a> {
     fn on_project(&self) {
-        if match prompt_one(Question::select("start")
-            .message(format!("Are you ready to begin your new project called {}?", self.subject_name))
-            .choices(vec![
-                "Yes",
-                "No",
-            ]).build()
-        ) {
-            Ok(answer) => match answer.as_list_item() {
-                Some(answer) => answer.text == "No",
-                None => true,
-            },
+        println!("{}", match env::var("AKJO_GITHUB_TOKEN") { 
+            Ok(value) => value, 
+            Err(_) => String::from("") 
+        });
+
+        // Ask if ready to create project
+        if match Select::new("Are you ready to begin your new project?", vec![
+            "Yes",
+            "No",
+        ]).prompt() {
+            Ok(choice) => choice == "No",
             Err(_) => {
-                eprintln!("Failed to parse question!");
+                eprintln!("Error: Failed to parse question!");
                 exit(-1);
             },
         } {
-            println!("Alright then, see you next time :)");
-            exit(0);
+            println!("Alright, see you later!");
+            exit(0); 
         }
 
         Term::stdout().clear_screen().unwrap();
 
-        let project_type = match prompt_one(Question::select("project_type")
-            .message("Alright, let's get started by choosing the type of project you want to create.")
-            .choices(vec![
-                "Empty Project",
-                "Rust Binary",
-                "Rust Library",
-                "Rust CLI App",
-            ]).build()
-        ) {
-            Ok(answer) => match answer.as_list_item() {
-                Some(answer) => ProjectTypes::from_name(&answer.text).unwrap(),
-                None => ProjectTypes::EmptyProject,
-            },
+        // Ask for project type
+        let project_type = match Select::new("Let's start by defining the type of project you want to create.", ProjectTypes::get_all_names()).prompt() {
+            Ok(choice) => ProjectTypes::from_name(&choice).unwrap(),
             Err(_) => {
-                eprintln!("Failed to parse question!");
+                eprintln!("Error: Failed to parse question!");
                 exit(-1);
             },
         };
 
-        match prompt_one(Question::select("three_name_info")
-            .message("Great. We now have to define the ID, name and title of the project.")
-            .choice("Alright!")
-            .build()
-        ) {
+        // Info about three names
+        match Select::new("Now we need to define the title, name and ID for the project.", vec![
+            "Alright!",
+        ]).without_help_message().prompt() {
             Ok(_) => {},
             Err(_) => {
-                eprintln!("Failed to parse question!");
+                eprintln!("Error: Failed to parse question!");
                 exit(-1);
+            },
+        }
+
+        // Ask for project title
+        let project_title = match Text::new("Project Title:").with_initial_value(
+            self.subject_name
+        ).prompt() {
+            Ok(title) => title,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // Ask for project name (PascalCase | PascalCASE)
+        let project_name = match Text::new("Project Name:").with_initial_value(
+            self.subject_name.to_case(Case::Pascal).as_str()
+        ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
+            if input.is_case(Case::Pascal) || Self::make_big_pascal_case(input).is_case(Case::Pascal) {
+                Ok(Validation::Valid)
+            } else {
+                Ok(Validation::Invalid("Project name must be in PascalCase or PascalCASE!".into()))
             }
+        }).with_help_message("The project name must be in PascalCase or PascalCASE").prompt() {
+            Ok(name) => name,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
         };
 
-        let (project_title, project_name, project_id) = match prompt([
-            Question::input("project_title")
-                .message("Project Title")
-                .default(self.subject_name)
-                .build(),
-            Question::input("project_name")
-                .message("Project Name (PascalCase | PascalCASE)")
-                .default(self.subject_name.to_case(Case::Pascal))
-                .validate(
-                    |project_name, _| 
-                    if project_name.is_case(Case::Pascal) || NewAction::<'a>::make_big_kebab_case(project_name).is_case(Case::Pascal) {
-                        Ok(())
-                    } else {
-                        Err("The name of your new project must be in PascalCase!".to_string())
-                    }
-                )
-                .build(),
-            Question::input("project_id")
-                .message("Project ID (kebab-case)")
-                .default(self.subject_name.to_case(Case::Kebab))
-                .validate(
-                    |project_id, _| 
-                    if project_id.is_case(Case::Kebab) || NewAction::<'a>::make_big_kebab_case(project_id).is_case(Case::Kebab) {
-                        Ok(())
-                    } else {
-                        Err("The id of your new project must be in kebab-case!".to_string())
-                    }
-                )
-                .build()
-        ]) {
-            Ok(answers) => {
-                (
-                    match answers.get("project_title") {
-                        Some(value) => match value.as_string() {
-                            Some(value) => value.to_string(),
-                            None => self.subject_name.to_string()
-                        },
-                        None => self.subject_name.to_string()
-                    },
-                    match answers.get("project_name") {
-                        Some(value) => match value.as_string() {
-                            Some(value) => value.to_string(),
-                            None => self.subject_name.to_case(Case::Pascal)
-                        },
-                        None => self.subject_name.to_case(Case::Pascal)
-                    },
-                    match answers.get("project_id") {
-                        Some(value) => match value.as_string() {
-                            Some(value) => value.to_string(),
-                            None => self.subject_name.to_case(Case::Kebab)
-                        },
-                        None => self.subject_name.to_case(Case::Kebab)
-                    },
-                )
-            },
-            Err(_) => {
-                eprintln!("Failed to parse question!");
-                exit(-1);
+        // Ask for project id (kebab-case)
+        let project_id = match Text::new("Project ID:").with_initial_value(
+            self.subject_name.to_case(Case::Kebab).as_str()
+        ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
+            if input.is_case(Case::Kebab) {
+                Ok(Validation::Valid)
+            } else {
+                Ok(Validation::Invalid("Project ID must be in kebab-case!".into()))
             }
-        };
-
-        let project_description = match prompt_one(Question::input("project_description")
-            .message("We also need a short description for your project.")
-            .build()
-        ) {
-            Ok(answer) => match answer.as_string() {
-                Some(value) => value.to_string(),
-                None => String::new(),
-            },
+        }).with_help_message("The project ID must be in kebab-case").prompt() {
+            Ok(id) => id,
             Err(_) => {
-                eprintln!("Failed to parse question!");
+                eprintln!("Error: Failed to parse question!");
                 exit(-1);
             },
         };
 
-        let project_version = match prompt_one(Question::input("project_version")
-            .message("And what version should your project start with?")
-            .default("0.1.0")
-            .build()
-        ) {
-            Ok(answer) => match answer.as_string() {
-                Some(value) => value.to_string(),
-                None => "0.1.0".to_string(),
-            },
+        // Info about additional info about the project
+        match Select::new("Great! We also need to define some additional information about the project.", vec![
+            "Got it!",
+        ]).without_help_message().prompt() {
+            Ok(_) => {},
             Err(_) => {
-                eprintln!("Failed to parse question!");
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        }
+
+        // Ask for project description
+        let project_description = match Text::new("Project Description:").with_initial_value(
+            match project_type {
+                ProjectTypes::EmptyProject => "An empty project.",
+                ProjectTypes::EmptyRustBinary => "An empty Rust binary project.",
+                ProjectTypes::EmptyRustLibrary => "An empty Rust library project.",
+                ProjectTypes::RustCliApp => "A Rust CLI app project.",
+            }
+        ).prompt() {
+            Ok(description) => description,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
                 exit(-1);
             },
         };
+
+        // Ask for project version
+        let project_version = match Text::new("Project Version:").with_initial_value(
+            "0.1.0"
+        ).prompt() {
+            Ok(version) => version,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // Info about additional info about the author
+        match Select::new("Finally we also need some more information about you!", vec![
+            "Sure!",
+        ]).without_help_message().prompt() {
+            Ok(_) => {},
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        }
+
+        // Ask for author name
+        let author_name = match Text::new("Author Name:").with_default(
+           "Lukas Küffer"
+        ).prompt() {
+            Ok(name) => name,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // Ask for author email
+        let author_email = match Text::new("Author E-Mail:").with_default(
+            "lukas.kueffer@outlook.com"
+        ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
+            if EmailAddress::is_valid(input) {
+                Ok(Validation::Valid)
+            } else {
+                Ok(Validation::Invalid("E-Mail address is invalid!".into()))
+            }
+        }).prompt() {
+            Ok(email) => email,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // Ask for author github
+        let author_github = match Text::new("Author GitHub:").with_default(
+            "Akjo03"
+        ).prompt() {
+            Ok(github) => github,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // Ask for project path with info at the end
+        let project_path = match Text::new("Finally, where do you want to save your new project?").with_initial_value(
+            env::current_dir().unwrap().join(&project_name).to_str().unwrap()
+        ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
+            if Path::new(input).exists() {
+                Ok(Validation::Invalid("Path already exists!".into()))
+            } else {
+                Ok(Validation::Valid)
+            }
+        }).with_autocomplete(FilePathCompleter::default()).prompt() {
+            Ok(path) => path,
+            Err(_) => {
+                eprintln!("Error: Failed to parse question!");
+                exit(-1);
+            },
+        };
+
+        // === Create project ===
+        let octocrab_instance = match Octocrab::builder()
+            .personal_token(
+                match env::var("AKJO_GITHUB_TOKEN") { 
+                    Ok(value) => value, 
+                    Err(_) => String::from("") 
+                }
+            ).build() {
+                Ok(octocrab) => octocrab,
+                Err(_) => {
+                    eprintln!("Error: Failed to connect and authenticate to GitHub!");
+                    eprintln!("Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
+                    exit(-1);
+                },
+            };
+
+        // Create a new GitHub repo using the appropriate template repo and project name
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Creating a GitHub repo for {}...", project_name), Color::White);
+            
+            match block_on(
+                octocrab_instance.repos("AkjoStudios", project_type.get_template_repo())
+                    .generate(&project_name)
+                    .owner("AkjoStudios")
+                    .description(&project_description)
+                    .private(false)
+                    .send()
+            ) {
+                Ok(_) => {
+                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
+                },
+                Err(err) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to create GitHub repo: {}", err).as_str());
+                    exit(-1);
+                },
+            }
+            
+        }
+        
+        // Clone the GitHub repo to the specified path.
+
+        // Replace the placeholders inside the project with the specified values
+
+        // Add a .akjocli file to the project that holds all relevant information.
+
+        // Commit and push the changes to the GitHub repo.
+
+        // Add an entry for this new project with the required values to the AkjoRepo
+
+        // Print a success message
     }
 }

@@ -29,7 +29,8 @@ pub struct App {
     command: Commands,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = App::parse();
     match args.command {
         Commands::New {subject_type, subject_name, options} => {
