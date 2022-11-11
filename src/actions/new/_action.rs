@@ -1,6 +1,6 @@
 use std::env;
 use std::path::Path;
-use std::process::exit;
+use std::process::{exit, Command};
 
 use colored::Colorize;
 use email_address::EmailAddress;
@@ -11,7 +11,6 @@ use console::Term;
 
 use convert_case::{Casing, Case};
 use octocrab::Octocrab;
-use tokio::runtime::Handle;
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::actions::Action;
@@ -58,11 +57,6 @@ pub struct NewAction<'a> {
     }
 } impl<'a> Action for NewAction<'a> {
     fn on_project(&self) {
-        println!("{}", match env::var("AKJO_GITHUB_TOKEN") { 
-            Ok(value) => value, 
-            Err(_) => String::from("") 
-        });
-
         // Ask if ready to create project
         if match Select::new("Are you ready to begin your new project?", vec![
             "Yes",
@@ -279,7 +273,7 @@ pub struct NewAction<'a> {
                     .send()
             ) {
                 Ok(_) => {
-                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
+                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Successfully created GitHub repo AkjoStudios/{}!", project_name).as_str()); 
                 },
                 Err(err) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to create GitHub repo: {}", err).as_str());
@@ -289,7 +283,24 @@ pub struct NewAction<'a> {
             
         }
         
-        // Clone the GitHub repo to the specified path.
+        // Clone the GitHub repo using git to the specified path.
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Cloning GitHub repo to {}...", project_path), Color::White);
+
+            match Command::new("git")
+                .arg("clone")
+                .arg(format!("https://github.com/AkjoStudios/{}.git", project_name))
+                .arg(&project_path)
+                .output() {
+                    Ok(_) => {
+                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Successfully cloned Github repo to {}!", project_path).as_str());
+                    },
+                    Err(_) => {
+                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to clone GitHub repo to {}!", project_path).as_str());
+                        exit(-1);
+                    },
+                };
+        }
 
         // Replace the placeholders inside the project with the specified values
 
