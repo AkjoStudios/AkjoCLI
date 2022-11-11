@@ -1,12 +1,6 @@
 use std::env;
-use std::fs::File;
 use std::path::Path;
-<<<<<<< HEAD
 use std::process::{exit, Command};
-=======
-use std::io::Write;
-use std::process::exit;
->>>>>>> a84bf53bdb2cce8836de6b2419b4d1a0bd8a63ec
 
 use colored::Colorize;
 use email_address::EmailAddress;
@@ -14,7 +8,6 @@ use email_address::EmailAddress;
 use inquire::validator::Validation;
 use inquire::{Select, Text, CustomUserError};
 use console::Term;
-use std::process::Command;
 
 use convert_case::{Casing, Case};
 use octocrab::Octocrab;
@@ -282,15 +275,14 @@ pub struct NewAction<'a> {
                 Ok(_) => {
                     spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Successfully created GitHub repo AkjoStudios/{}!", project_name).as_str()); 
                 },
-                Err(_) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
+                Err(err) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to create GitHub repo: {}", err).as_str());
                     exit(-1);
                 },
             }
             
         }
         
-<<<<<<< HEAD
         // Clone the GitHub repo using git to the specified path.
         {
             let spinner = Spinner::new(Spinners::Dots12, format!("Cloning GitHub repo to {}...", project_path), Color::White);
@@ -309,49 +301,10 @@ pub struct NewAction<'a> {
                     },
                 };
         }
-=======
-        // Clone the GitHub repo to the specified path.
-        {
-            let spinner = Spinner::new(Spinners::Dots12, format!("Cloning GitHub repo to {}", project_path), Color::White);
->>>>>>> a84bf53bdb2cce8836de6b2419b4d1a0bd8a63ec
-
-            match Command::new("git")
-                .arg(format!("clone AkjoStudios/{} {}", project_name, project_path))
-                .output() {
-                    Ok(_) => {
-                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
-                    },
-                    Err(_) => {
-                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
-                        exit(-1);
-                    },
-                }
-        }
-
-        // Add a .akjocli file to the project that holds all relevant information.
-        {
-            let spinner = Spinner::new(Spinners::Dots12, format!("Creating .akjocli file..."), Color::White);
-
-            let mut file = match File::create(format!("{}/.akjocli", project_path)) {
-                Ok(file) => file,
-                Err(_) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
-                    exit(-1);
-                },
-            };
-
-            match file.write_all(b"") {
-                Ok(_) => {
-                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created .akjocli file!");
-                },
-                Err(_) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
-                    exit(-1);
-                },
-            }
-        }
 
         // Replace the placeholders inside the project with the specified values
+
+        // Add a .akjocli file to the project that holds all relevant information.
 
         // Commit and push the changes to the GitHub repo.
 
