@@ -349,6 +349,11 @@ pub struct NewAction<'a> {
         }
 
         // Replace the placeholders inside the project with the specified values
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Replacing placeholders inside the new project..."), Color::White);
+
+            spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "NOT IMPLEMENTED: Successfully replaced placeholders inside the new project!");
+        }
 
         // Commit and push the changes to the GitHub repo.
         {
@@ -394,6 +399,11 @@ pub struct NewAction<'a> {
         }
 
         // Add an entry for this new project with the required values to the AkjoRepo
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Adding entry to AkjoRepo for this new project..."), Color::White);
+
+            spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "NOT IMPLEMENTED: Successfully added entry to AkjoRepo for this new project!");
+        }
 
         // Print a success message
         match Select::new(format!("Successfully created new project {}!", project_name).as_str(), vec![
@@ -402,5 +412,7 @@ pub struct NewAction<'a> {
             Ok(_) => {},
             Err(_) => exit(-1),
         }
+
+        Term::stdout().clear_screen().unwrap();
     }
 }
