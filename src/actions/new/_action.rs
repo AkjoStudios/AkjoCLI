@@ -414,5 +414,6 @@ pub struct NewAction<'a> {
         }
 
         Term::stdout().clear_screen().unwrap();
+        Term::stdout().clear_screen().unwrap();
     }
 }
