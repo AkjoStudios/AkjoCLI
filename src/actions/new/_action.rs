@@ -1,6 +1,8 @@
 use std::env;
+use std::fs::File;
 use std::path::Path;
-use std::process::{exit, Command};
+use std::io::Write;
+use std::process::exit;
 
 use colored::Colorize;
 use email_address::EmailAddress;
@@ -8,6 +10,7 @@ use email_address::EmailAddress;
 use inquire::validator::Validation;
 use inquire::{Select, Text, CustomUserError};
 use console::Term;
+use std::process::Command;
 
 use convert_case::{Casing, Case};
 use octocrab::Octocrab;
@@ -265,7 +268,7 @@ pub struct NewAction<'a> {
             let spinner = Spinner::new(Spinners::Dots12, format!("Creating a GitHub repo for {}...", project_name), Color::White);
             
             match block_on(
-                octocrab_instance.repos("AkjoStudios", project_type.get_template_repo())
+                octocrab_instance.repos("AkjoStudios", project_type.clone().get_template_repo())
                     .generate(&project_name)
                     .owner("AkjoStudios")
                     .description(&project_description)
@@ -273,43 +276,131 @@ pub struct NewAction<'a> {
                     .send()
             ) {
                 Ok(_) => {
-                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Successfully created GitHub repo AkjoStudios/{}!", project_name).as_str()); 
+                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
                 },
-                Err(err) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to create GitHub repo: {}", err).as_str());
+                Err(_) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
                     exit(-1);
                 },
             }
             
         }
         
-        // Clone the GitHub repo using git to the specified path.
+        // Clone the GitHub repo to the specified path.
         {
-            let spinner = Spinner::new(Spinners::Dots12, format!("Cloning GitHub repo to {}...", project_path), Color::White);
+            let spinner = Spinner::new(Spinners::Dots12, format!("Cloning GitHub repo to {}", project_path), Color::White);
 
             match Command::new("git")
                 .arg("clone")
                 .arg(format!("https://github.com/AkjoStudios/{}.git", project_name))
-                .arg(&project_path)
                 .output() {
                     Ok(_) => {
-                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Successfully cloned Github repo to {}!", project_path).as_str());
+                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
                     },
                     Err(_) => {
-                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to clone GitHub repo to {}!", project_path).as_str());
+                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
                         exit(-1);
                     },
-                };
+                }
+        }
+
+        // Add a .akjocli file to the project that holds all relevant information.
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Creating .akjocli file..."), Color::White);
+
+            let mut file = match File::create(format!("{}/.akjocli", project_path)) {
+                Ok(file) => file,
+                Err(_) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
+                    exit(-1);
+                },
+            };
+
+            match file.write_all(format!(
+                "
+                project_type={}
+                project_title={}
+                project_name={}
+                project_id={}
+                project_description={}
+                project_version={}
+                author_name={}
+                author_email={}
+                author_github={}
+                ",
+                project_type.clone().get_name(),
+                project_title,
+                project_name,
+                project_id,
+                project_description,
+                project_version,
+                author_name,
+                author_email,
+                author_github,
+            ).replace(" ", "").replace("\t", "").trim().as_bytes()) {
+                Ok(_) => {
+                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created .akjocli file!");
+                },
+                Err(_) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
+                    exit(-1);
+                },
+            }
         }
 
         // Replace the placeholders inside the project with the specified values
 
-        // Add a .akjocli file to the project that holds all relevant information.
-
         // Commit and push the changes to the GitHub repo.
+        {
+            let spinner = Spinner::new(Spinners::Dots12, format!("Committing and pushing changes to GitHub repo..."), Color::White);
+
+            match Command::new("git")
+                .arg("add")
+                .arg(".")
+                .output() {
+                    Ok(_) => {},
+                    Err(_) => {
+                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
+                        exit(-1);
+                    },
+                }
+
+            match Command::new("git")
+                .arg("commit")
+                .arg("-m")
+                .arg("Initial commit")
+                .output() {
+                    Ok(_) => {},
+                    Err(_) => {
+                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
+                        exit(-1);
+                    },
+                }
+
+            match Command::new("git")
+                .arg("push")
+                .arg("-u")
+                .arg("origin")
+                .arg("main")
+                .output() {
+                    Ok(_) => {
+                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully committed and pushed changes to GitHub repo!");
+                    },
+                    Err(_) => {
+                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
+                        exit(-1);
+                    },
+                }
+        }
 
         // Add an entry for this new project with the required values to the AkjoRepo
 
         // Print a success message
+        match Select::new(format!("Successfully created new project {}!", project_name).as_str(), vec![
+            "Exit",
+        ]).without_help_message().prompt() {
+            Ok(_) => {},
+            Err(_) => exit(-1),
+        }
     }
 }
