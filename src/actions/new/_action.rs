@@ -373,7 +373,7 @@ pub struct NewAction<'a> {
             match Command::new("git")
                 .arg("commit")
                 .arg("-m")
-                .arg("Initial commit")
+                .arg("\"Initial commit\"")
                 .output() {
                     Ok(_) => {},
                     Err(_) => {
