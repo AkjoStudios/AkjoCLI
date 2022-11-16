@@ -276,7 +276,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             match Command::new("git")
                 .arg("clone")
                 .arg(format!("https://github.com/AkjoStudios/{}.git", project_info.get_project_name()))
-                .status() {
+                .output() {
                     Ok(_) => {
                         spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created GitHub repo!");
                     },
@@ -298,7 +298,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             },
         };
 
-        match file.write_all(format!(
+        match file.write_all(NewAction::reformat_akjocli_file(&format!(
             "
             project_type={}
             project_title={}
@@ -319,7 +319,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             project_info.get_author_name(),
             project_info.get_author_email(),
             project_info.get_author_github(),
-        ).replace(" ", "").replace("\t", "").trim().as_bytes()) {
+        )).as_bytes()) {
             Ok(_) => {
                 spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully created .akjocli file!");
             },
@@ -416,7 +416,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             .arg("add")
             .arg(".")
             .current_dir(project_info.get_project_path())
-            .status() {
+            .output() {
                 Ok(_) => {},
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
@@ -429,7 +429,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             .arg("-m")
             .arg("Initial commit")
             .current_dir(project_info.get_project_path())
-            .status() {
+            .output() {
                 Ok(_) => {},
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
@@ -443,7 +443,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             .arg("origin")
             .arg("main")
             .current_dir(project_info.get_project_path())
-            .status() {
+            .output() {
                 Ok(_) => {
                     spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully committed and pushed changes to GitHub repo!");
                 },

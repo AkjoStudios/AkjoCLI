@@ -4,6 +4,7 @@ use crate::commands::{InitCommandOpts, NewCommandOpts, EditCommandOpts, DeleteCo
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    #[clap(about = "Initializes AkjoCLI for the first use. Installs and configures required dependencies and AkjoCLI itself.")]
     Init {
         #[clap(flatten)]
         options: InitCommandOpts,

@@ -37,6 +37,21 @@ pub struct NewAction<'a> {
             format!("{}{}", str.get(..last_upper_word_start).unwrap(), last_word.to_case(Case::Pascal))
         }
     }
+
+    pub fn reformat_akjocli_file(input: &String) -> String {
+        let lines = input.lines().collect::<Vec<&str>>();
+        let mut new_lines = Vec::<&str>::new();
+        
+        for line in lines {
+            if line.is_empty() {
+                continue;
+            }
+
+            new_lines.push(line.trim_start());
+        }
+
+        new_lines.join("\n")
+    }
 } impl<'a> Action for NewAction<'a> {
     fn on_project(&self) {
         NewProjectAction::create(self);

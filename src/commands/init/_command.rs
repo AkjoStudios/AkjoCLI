@@ -27,11 +27,11 @@ pub struct InitCommand {
             match Command::new("choco")
                 .arg("-v")
                 .output() {
-                    Ok(output) => {
-                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Chocolatey v{} is already installed!", str::from_utf8(&output.stdout).unwrap()).as_str());
+                    Ok(_) => {
+                        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Chocolatey is already installed!").as_str());
                     },
                     Err(_) => {
-                        match Command::new("%SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
+                        match Command::new("C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe")
                         .arg("-NoProfile")
                         .arg("-InputFormat")
                         .arg("None")
@@ -39,12 +39,17 @@ pub struct InitCommand {
                         .arg("Bypass")
                         .arg("-Command")
                         .arg("[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))")
-                        .status() {
-                            Ok(_) => {
-                                spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully installed chocolatey!");
+                        .output() {
+                            Ok(output) => {
+                                if str::from_utf8(&output.stderr).unwrap().contains("elevated") {
+                                    spinner.stop_and_persist(format!("{}", ">".red()).as_str(), format!("Failed to install chocolatey! Please run the AkjoCLI initialziation scriptas an administrator!").as_str());
+                                    Self::on_error(str::from_utf8(&output.stderr).unwrap().to_string().red().to_string());
+                                } else {
+                                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Chocolatey has been successfully installed!").as_str());
+                                }
                             }, 
-                            Err(_) => {
-                                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to install chocolatey!");
+                            Err(e) => {
+                                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to install chocolatey! Error: {}", e).as_str());
                             }
                         }
                     }
