@@ -15,7 +15,7 @@ pub mod actions;
 pub mod command_def;
 use command_def::Commands;
 pub mod commands;
-use commands::{NewCommand, EditCommand, DeleteCommand};
+use commands::{InitCommand, NewCommand, EditCommand, DeleteCommand};
 
 pub mod util;
 
@@ -33,6 +33,9 @@ pub struct App {
 async fn main() {
     let args = App::parse();
     match args.command {
+        Commands::Init { options } => {
+            InitCommand::new(options).run();
+        },
         Commands::New {subject_type, subject_name, options} => {
             match SubjectTypes::from_str(&subject_type) {
                 Ok(subject_type) => NewCommand::new(subject_type, subject_name, options).run(),

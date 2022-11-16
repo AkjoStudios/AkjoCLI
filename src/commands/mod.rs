@@ -1,3 +1,6 @@
+pub mod init;
+pub use init::{InitCommand, InitCommandOpts};
+
 pub mod new;
 pub use new::{NewCommand, NewCommandOpts};
 

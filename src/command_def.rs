@@ -1,9 +1,13 @@
 use clap::Subcommand;
 
-use crate::commands::{NewCommandOpts, EditCommandOpts, DeleteCommandOpts};
+use crate::commands::{InitCommandOpts, NewCommandOpts, EditCommandOpts, DeleteCommandOpts};
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
+    Init {
+        #[clap(flatten)]
+        options: InitCommandOpts,
+    },
     #[clap(about = "Creates a new instance of the given subject type (project, etc.)")]
     New {
         #[clap()]
