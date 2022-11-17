@@ -32,6 +32,7 @@ futures = { version = "0.3.17", features = ["executor"] }
 indicatif = "0.17.1"
 inquire = "0.5.2"
 octocrab = "0.17.0"
+os_info = "3.5.1"
 spinoff = "0.5.4"
 tokio = { version = "1.13.0", features = ["full"] }
 unicode-segmentation = "1.10.0"

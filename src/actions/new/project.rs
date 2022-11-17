@@ -34,7 +34,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             "Exit",
         ]).without_help_message().prompt() {
             Ok(_) => {},
-            Err(_) => exit(-1),
+            Err(_) => exit(1),
         }
 
         Term::stdout().clear_screen().unwrap();
@@ -49,7 +49,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(choice) => choice == "No",
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         } {
             println!("Alright, see you later!");
@@ -64,7 +64,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(choice) => ProjectTypes::from_name(&choice).unwrap(),
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -75,7 +75,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(_) => {},
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         }
 
@@ -86,7 +86,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(title) => title,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -103,7 +103,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(name) => name,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -120,7 +120,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(id) => id,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -131,7 +131,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(_) => {},
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         }
 
@@ -147,7 +147,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(description) => description,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -158,7 +158,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(version) => version,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -169,7 +169,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(_) => {},
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         }
 
@@ -180,7 +180,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(name) => name,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -197,7 +197,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(email) => email,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -208,7 +208,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(github) => github,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -225,7 +225,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(path) => path,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
-                exit(-1);
+                exit(1);
             },
         });
 
@@ -244,7 +244,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                 Err(_) => {
                     eprintln!("Error: Failed to connect and authenticate to GitHub!");
                     eprintln!("Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
-                    exit(-1);
+                    exit(1);
                 },
             }
     }
@@ -265,7 +265,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             },
             Err(_) => {
                 spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
-                exit(-1);
+                exit(1);
             },
         }
     }
@@ -282,7 +282,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                     },
                     Err(_) => {
                         spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create GitHub repo! Please make sure that you have set the AKJO_GITHUB_TOKEN environment variable!");
-                        exit(-1);
+                        exit(1);
                     },
                 }
     }
@@ -294,7 +294,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             Ok(file) => file,
             Err(_) => {
                 spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
-                exit(-1);
+                exit(1);
             },
         };
 
@@ -325,7 +325,7 @@ pub struct NewProjectAction; impl NewProjectAction {
             },
             Err(_) => {
                 spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to create .akjocli file!");
-                exit(-1);
+                exit(1);
             },
         }
     }
@@ -360,7 +360,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                             Ok(file) => file,
                             Err(_) => {
                                 spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to replace placeholders inside the new project!");
-                                exit(-1);
+                                exit(1);
                             },
                         };
 
@@ -372,7 +372,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                                     Ok(file) => file,
                                     Err(_) => {
                                         spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to replace placeholders inside the new project!");
-                                        exit(-1);
+                                        exit(1);
                                     },
                                 };
 
@@ -388,20 +388,20 @@ pub struct NewProjectAction; impl NewProjectAction {
                                         Ok(_) => {},
                                         Err(_) => {
                                             spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to replace placeholders inside the new project!");
-                                            exit(-1);
+                                            exit(1);
                                         },
                                     }
                             },
                             Err(_) => {
                                 spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to replace placeholders inside the new project!");
-                                exit(-1);
+                                exit(1);
                             },
                         }
                     }
                 },
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to replace placeholders inside the new project!");
-                    exit(-1);
+                    exit(1);
                 },
             }
         }
@@ -420,7 +420,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                 Ok(_) => {},
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
-                    exit(-1);
+                    exit(1);
                 },
             }
 
@@ -433,7 +433,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                 Ok(_) => {},
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
-                    exit(-1);
+                    exit(1);
                 },
             }
 
@@ -449,7 +449,7 @@ pub struct NewProjectAction; impl NewProjectAction {
                 },
                 Err(_) => {
                     spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to commit and push changes to GitHub repo!");
-                    exit(-1);
+                    exit(1);
                 },
             }
     }
