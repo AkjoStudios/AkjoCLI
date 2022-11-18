@@ -4,6 +4,7 @@ use directories::BaseDirs;
 use spinoff::{Spinner, Spinners, Color};
 use std::str;
 use os_info::{self, Type};
+use is_elevated::is_elevated;
 
 use crate::commands::InitCommandOpts;
 
@@ -24,19 +25,24 @@ pub struct InitCommand {
     pub fn run(&self) {
         match os_info::get().os_type() {
             Type::Windows => {
+                Self::check_for_elevated_privileges();
                 Self::install_chocolatey();
                 Self::install_git_with_choco();
                 Self::clone_akjo_repo();
                 Self::add_akjocli_to_path();
             },
             Type::Ubuntu => {
+                Self::check_for_elevated_privileges();
                 Self::install_git_with_apt();
                 Self::clone_akjo_repo();
+                Self::add_akjocli_to_path();
             },
             Type::Macos => {
+                Self::check_for_elevated_privileges();
                 Self::install_brew();
                 Self::install_git_with_brew();
                 Self::clone_akjo_repo();
+                Self::add_akjocli_to_path();
             },
             _ => {
                 Self::on_error("AkjoCLI only supports Windows, Linux and MacOS!".to_string());
@@ -44,6 +50,12 @@ pub struct InitCommand {
         }
 
         println!("{}", "Initialization has been completed successfully! Thanks for using AkjoCLI!".green());
+    }
+
+    fn check_for_elevated_privileges() {
+        if !is_elevated() {
+            Self::on_error(format!("{}", "To initialize AkjoCLI, you need elevated privileges! Run this command again as an administrator.".red()));
+        }
     }
 
     fn install_chocolatey() {
@@ -65,13 +77,8 @@ pub struct InitCommand {
                     .arg("-Command")
                     .arg("[System.Net.ServicePointManager]::SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))")
                     .output() {
-                        Ok(output) => {
-                            if str::from_utf8(&output.stderr).unwrap().contains("elevated") {
-                                spinner.stop_and_persist(format!("{}", ">".red()).as_str(), format!("Failed to install chocolatey! Please run the AkjoCLI initialziation script as an administrator!").as_str());
-                                Self::on_error(str::from_utf8(&output.stderr).unwrap().to_string().red().to_string());
-                            } else {
-                                spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Chocolatey has been successfully installed!").as_str());
-                            }
+                        Ok(_) => {
+                            spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Chocolatey has been successfully installed!").as_str());
                         }, 
                         Err(e) => {
                             spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to install chocolatey! Error: {}", e).as_str());
@@ -242,17 +249,30 @@ pub struct InitCommand {
         if let Some(path) = env::var_os("PATH") {
             let mut paths = env::split_paths(&path).collect::<Vec<_>>();
             paths.push(PathBuf::from(match env::current_exe() {
-                Ok(exe_path) => exe_path.parent().unwrap().to_path_buf(),
-                Err(_) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to add AkjoCLI to PATH!").as_str());
-                    Self::on_error("Failed to get current executable path! No environment variable will be set!".red().to_string());
-                    return;
+                Ok(path) => path,
+                Err(e) => {
+                    Self::on_error(format!("Failed to get current executable path! Error: {}", e).red().to_string());
+                    exit(1);
                 }
-            }));
-            let new_path = env::join_paths(paths).unwrap();
-            env::set_var("PATH", &new_path);
-        }
+            }).parent().unwrap().to_path_buf());
 
-        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI has been successfully added to PATH!").as_str());
+            let new_path = env::join_paths(paths).unwrap();
+
+            match globalenv::set_var("PATH", match new_path.to_str() {
+                Some(path) => path,
+                None => {
+                    Self::on_error("Failed to convert path to string!".red().to_string());
+                    exit(1);
+                }
+            }) {
+                Ok(_) => {
+                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI has been successfully added to PATH!").as_str());
+                },
+                Err(e) => {
+                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to add AkjoCLI to PATH! Error: {}", e).as_str());
+                    Self::on_error(format!("{}", e).red().to_string());
+                }
+            }
+        }
     }
 }
