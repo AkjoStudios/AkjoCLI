@@ -1,19 +1,19 @@
-use std::{env, process::{exit, Command}, path::{PathBuf, Path}, fs};
+use std::{env, process::{exit, Command}, path::{PathBuf, Path}};
 use colored::Colorize;
-use directories::BaseDirs;
 use spinoff::{Spinner, Spinners, Color};
 use std::str;
 use os_info::{self, Type};
 use is_elevated::is_elevated;
+use crate::util::base_dir;
 
 use crate::commands::InitCommandOpts;
 
 pub struct InitCommand {
-    options: InitCommandOpts,
+    _options: InitCommandOpts,
 } impl InitCommand {
-    pub fn new(options: InitCommandOpts) -> Self {
+    pub fn new(_options: InitCommandOpts) -> Self {
         Self {
-            options,
+            _options,
         }
     }
 
@@ -196,42 +196,20 @@ pub struct InitCommand {
             }
     }
 
-    fn get_base_dir() -> PathBuf {
-        let base_dirs = match BaseDirs::new() {
-            Some(base_dirs) => base_dirs,
-            None => {
-                Self::on_error("Failed to get base directories!".red().to_string());
-                exit(1);
-            }
-        };
-
-        let base_dir = base_dirs.config_dir().join("AkjoCLI");
-
-        if !base_dir.exists() {
-            match fs::create_dir_all(&base_dir) {
-                Ok(_) => {},
-                Err(e) => {
-                    Self::on_error(format!("Failed to create base directory! Error: {}", e).red().to_string());
-                    exit(1);
-                }
-            }
-        }
-
-        base_dir
-    }
-
     fn clone_akjo_repo() {
         let spinner = Spinner::new(Spinners::Dots12, "Cloning AkjoRepo repository to base directory...", Color::White);
 
-        if Path::new(&Self::get_base_dir().join("AkjoRepo")).exists() {
+        if Path::new(&base_dir::get_base_dir().join("AkjoRepo")).exists() {
             spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoRepo repository is already cloned!").as_str());
             return;
+        } else {
+            base_dir::create_base_dir();
         }
 
         match Command::new("git")
             .arg("clone")
             .arg("https://github.com/AkjoStudios/AkjoRepo.git")
-            .current_dir(Self::get_base_dir())
+            .current_dir(base_dir::get_base_dir())
             .output() {
                 Ok(_) => {
                     spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI repository has been successfully cloned!").as_str());
@@ -248,6 +226,18 @@ pub struct InitCommand {
 
         if let Some(path) = env::var_os("PATH") {
             let mut paths = env::split_paths(&path).collect::<Vec<_>>();
+
+            if paths.contains(&PathBuf::from(match env::current_exe() {
+                Ok(path) => path,
+                Err(e) => {
+                    Self::on_error(format!("Failed to get current executable path! Error: {}", e).red().to_string());
+                    exit(1);
+                }
+            }).parent().unwrap().to_path_buf()) {
+                spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI is already in PATH!").as_str());
+                return;
+            }
+
             paths.push(PathBuf::from(match env::current_exe() {
                 Ok(path) => path,
                 Err(e) => {

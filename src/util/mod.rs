@@ -6,3 +6,5 @@ pub use path_autocomplete::*;
 
 pub mod new_project;
 pub use new_project::*;
+
+pub mod base_dir;

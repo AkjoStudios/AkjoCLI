@@ -12,16 +12,16 @@
 
 <hr />
 
-<h3 align="center">(Optional) Installation</h3>
+<h3 align="center">Installation</h3>
 
 <p align="center">
-    More info on how to install AkjoCLI will follow soon!
+    Download the newest version from the <a href="https://github.com/AkjoStudios/AkjoCLI/releases">Releases</a>. After downloading the executable file open up an elevated shell and run the file with the <code>init</code> command. After the process is complete you should see the message <code>Initialization has been completed successfully! Thanks for using AkjoCLI!</code> and AkjoCLI should now be usable from anywhere in your system even without an elevated shell.
 </p>
 
-<h3 align="center">(Optional) Usage</h3>
+<h3 align="center">Usage</h3>
 
 <p align="center">
-    More info on how to use AkjoCLI will follow soon!
+    To use AkjoCLI run <code>akjo COMMAND</code> or for further help just run <code>akjo</code> or <code>akjo -h</code>.
 </p>
 
 <hr />
