@@ -18,7 +18,7 @@ pub fn get_base_dir() -> PathBuf {
 pub fn create_base_dir() {
     let base_dir = get_base_dir();
 
-    if !base_dir.exists() {
+    if !match base_dir.try_exists() { Ok(exists) => exists, Err(_) => false } {
         match fs::create_dir_all(&base_dir) {
             Ok(_) => {},
             Err(e) => {

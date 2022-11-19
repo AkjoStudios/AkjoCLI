@@ -14,7 +14,7 @@ use convert_case::{Casing, Case};
 use octocrab::Octocrab;
 use futures::executor::block_on;
 use spinoff::{Spinner, Spinners, Color};
-use crate::util::{ProjectTypes, FilePathCompleter, NewProject};
+use crate::util::{ProjectTypes, FilePathCompleter, NewProject, base_dir};
 use super::NewAction;
 
 pub struct NewProjectAction; impl NewProjectAction {
@@ -28,7 +28,7 @@ pub struct NewProjectAction; impl NewProjectAction {
         Self::add_akjocli_file(project_info);
         Self::replace_placeholders(project_info);
         Self::commit_new_project_repo(project_info);
-        Self::create_akjo_repo_entry();
+        Self::create_akjo_repo_entry(project_info);
 
         match Select::new(format!("Successfully created new project {}!", project_info.get_project_name()).as_str(), vec![
             "Exit",
@@ -59,6 +59,7 @@ pub struct NewProjectAction; impl NewProjectAction {
         Term::stdout().clear_screen().unwrap();
 
         let mut new_project = NewProject::new();
+
         // Ask for project type
         new_project.set_project_type(match Select::new("Let's start by defining the type of project you want to create.", ProjectTypes::get_all_names()).prompt() {
             Ok(choice) => ProjectTypes::from_name(&choice).unwrap(),
@@ -111,12 +112,14 @@ pub struct NewProjectAction; impl NewProjectAction {
         new_project.set_project_id(match Text::new("Project ID:").with_initial_value(
             action.subject_name.to_case(Case::Kebab).as_str()
         ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
-            if input.is_case(Case::Kebab) {
-                Ok(Validation::Valid)
-            } else {
+            if !input.is_case(Case::Kebab) {
                 Ok(Validation::Invalid("Project ID must be in kebab-case!".into()))
+            } else if input.contains('.') {
+                Ok(Validation::Invalid("Project ID cannot contain a period!".into()))
+            } else {
+                Ok(Validation::Valid)
             }
-        }).with_help_message("The project ID must be in kebab-case").prompt() {
+        }).with_help_message("The project ID must be in kebab-case and cannot have periods in it.").prompt() {
             Ok(id) => id,
             Err(_) => {
                 eprintln!("Error: Failed to parse question!");
@@ -216,7 +219,7 @@ pub struct NewProjectAction; impl NewProjectAction {
         new_project.set_project_path(match Text::new("Finally, where do you want to save your new project?").with_initial_value(
             env::current_dir().unwrap().join(new_project.get_project_name()).to_str().unwrap()
         ).with_validator(|input: &str| -> Result<Validation, CustomUserError> {
-            if Path::new(input).exists() {
+            if match Path::new(input).try_exists() { Ok(exists) => exists, Err(_) => false } {
                 Ok(Validation::Invalid("Path already exists!".into()))
             } else {
                 Ok(Validation::Valid)
@@ -454,9 +457,151 @@ pub struct NewProjectAction; impl NewProjectAction {
             }
     }
 
-    fn create_akjo_repo_entry() {
+    fn create_akjo_repo_entry(project_info: &NewProject) {
         let spinner = Spinner::new(Spinners::Dots12, format!("Adding entry to AkjoRepo for this new project..."), Color::White);
 
-        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "NOT IMPLEMENTED: Successfully added entry to AkjoRepo for this new project!");
+        let akjo_repo_dir = base_dir::get_base_dir().join("AkjoRepo");
+
+        if !match akjo_repo_dir.try_exists() { Ok(exists) => exists, Err(_) => { false } } {
+            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+            println!("{} {}", ">".red(), "AkjoRepo does not exist! Please run 'akjo init' to create it.");
+            exit(1);
+        }
+        if !match akjo_repo_dir.join("config.json").try_exists() { Ok(exists) => exists, Err(_) => { false } } {
+            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+            println!("{} {}", ">".red(), "AkjoRepo index is invalid! Please run 'akjo init' to fix it.");
+            exit(1);
+        }
+
+        match akjo_repo_dir.read_dir() {
+            Ok(entries) => {
+                for entry in entries {
+                    let entry = match entry {
+                        Ok(entry) => entry,
+                        Err(_) => {
+                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                            exit(1);
+                        },
+                    };
+
+                    if !entry.path().is_dir() {
+                        continue;
+                    }
+
+                    let first_index_dir_name = match entry.file_name().into_string() {
+                        Ok(name) => name.to_string(),
+                        Err(_) => {
+                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                            exit(1);
+                        },
+                    };
+
+                    let first_name_part = project_info.get_project_id().chars().take(2).collect::<String>();
+
+                    if first_index_dir_name.eq(&first_name_part) {
+                        let first_index_dir = akjo_repo_dir.join(first_index_dir_name);
+
+                        match first_index_dir.read_dir() {
+                            Ok(entries) => {
+                                for entry in entries {
+                                    let entry = match entry {
+                                        Ok(entry) => entry,
+                                        Err(_) => {
+                                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                            exit(1);
+                                        },
+                                    };
+
+                                    if !entry.path().is_dir() {
+                                        continue;
+                                    }
+
+                                    let second_index_dir_name = match entry.file_name().into_string() {
+                                        Ok(name) => name.to_string(),
+                                        Err(_) => {
+                                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                            exit(1);
+                                        },
+                                    };
+
+                                    let second_name_part = project_info.get_project_id().chars().skip(2).take(2).collect::<String>();
+
+                                    if second_index_dir_name.eq(&second_name_part) {
+                                        let second_index_dir = first_index_dir.join(second_index_dir_name);
+
+                                        match second_index_dir.read_dir() {
+                                            Ok(entries) => {
+                                                for entry in entries {
+                                                    let entry = match entry {
+                                                        Ok(entry) => entry,
+                                                        Err(_) => {
+                                                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                                            exit(1);
+                                                        },
+                                                    };
+
+                                                    if !entry.path().is_file() {
+                                                        continue;
+                                                    }
+
+                                                    let index_file_name = match entry.file_name().into_string() {
+                                                        Ok(name) => name.to_string(),
+                                                        Err(_) => {
+                                                            spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                                            println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                                            exit(1);
+                                                        },
+                                                    };
+
+                                                    if index_file_name.starts_with(".") {
+                                                        continue;
+                                                    }
+
+                                                    let index_file_name = index_file_name.split(".").collect::<Vec<&str>>()[0].to_string();
+
+                                                    if index_file_name.eq(project_info.get_project_id()) {
+                                                        spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                                        println!("{} {}", ">".red(), "An entry for this project already exists in your local AkjoRepo! Please run 'akjo delete index <project_id>' to remove it or 'akjo update index <project_id>' to update it.");
+                                                        exit(1);
+                                                    }
+                                                }
+                                            },
+                                            Err(_) => {
+                                                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                                println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                                exit(1);
+                                            }
+                                        }
+
+                                        // Create a new index file for this project
+
+                                        let index_file = second_index_dir.join(format!("{}.json", project_info.get_project_id()));
+
+                                        println!("{} {}", ">".blue(), "Creating index file for this project..."); // CONTINUE HERE
+                                    }
+                                }
+                            },
+                            Err(_) => {
+                                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                                println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                                exit(1);
+                            },
+                        }
+                    }
+                }
+            },
+            Err(_) => {
+                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), "Failed to add entry to AkjoRepo for this new project!");
+                println!("{} {}", ">".red(), "An error occurred while reading the local AkjoRepo index!");
+                exit(1);
+            },
+        }
+
+        spinner.stop_and_persist(format!("{}", ">".green()).as_str(), "Successfully added entry to AkjoRepo for this new project!");
     }
 }

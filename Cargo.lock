@@ -35,6 +35,8 @@ dependencies = [
  "is_elevated",
  "octocrab",
  "os_info",
+ "serde",
+ "serde_json",
  "spinoff",
  "tokio",
  "unicode-segmentation",

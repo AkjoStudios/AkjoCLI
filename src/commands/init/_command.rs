@@ -23,6 +23,7 @@ pub struct InitCommand {
     }
 
     pub fn run(&self) {
+        base_dir::create_base_dir();
         match os_info::get().os_type() {
             Type::Windows => {
                 Self::check_for_elevated_privileges();
@@ -105,7 +106,7 @@ pub struct InitCommand {
                     .output() {
                         Ok(output) => {
                             if str::from_utf8(&output.stderr).unwrap().contains("NOT successful") {
-                                spinner.stop_and_persist(format!("{}", ">".red()).as_str(), format!("Failed to install git! Please run the AkjoCLI initialziation script as an administrator!").as_str());
+                                spinner.stop_and_persist(format!("{}", ">".red()).as_str(), format!("Failed to install git!").as_str());
                                 Self::on_error(str::from_utf8(&output.stderr).unwrap().to_string().red().to_string());
                             } else {
                                 spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("Git has been successfully installed!").as_str());
@@ -199,26 +200,24 @@ pub struct InitCommand {
     fn clone_akjo_repo() {
         let spinner = Spinner::new(Spinners::Dots12, "Cloning AkjoRepo repository to base directory...", Color::White);
 
-        if Path::new(&base_dir::get_base_dir().join("AkjoRepo")).exists() {
+        if match Path::new(&base_dir::get_base_dir().join("AkjoRepo")).try_exists() { Ok(exists) => exists, Err(_) => false } {
             spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoRepo repository is already cloned!").as_str());
             return;
-        } else {
-            base_dir::create_base_dir();
         }
 
         match Command::new("git")
-            .arg("clone")
-            .arg("https://github.com/AkjoStudios/AkjoRepo.git")
-            .current_dir(base_dir::get_base_dir())
-            .output() {
-                Ok(_) => {
-                    spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI repository has been successfully cloned!").as_str());
-                },
-                Err(e) => {
-                    spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to clone AkjoCLI repository! Error: {}", e).as_str());
-                    Self::on_error(format!("{}", e).red().to_string());
-                }
+        .arg("clone")
+        .arg("https://github.com/AkjoStudios/AkjoRepo.git")
+        .current_dir(base_dir::get_base_dir())
+        .output() {
+            Ok(_) => {
+                spinner.stop_and_persist(format!("{}", ">".green()).as_str(), format!("AkjoCLI repository has been successfully cloned!").as_str());
+            },
+            Err(e) => {
+                spinner.stop_and_persist(format!("{}", "X".red()).as_str(), format!("Failed to clone AkjoCLI repository! Error: {}", e).as_str());
+                Self::on_error(format!("{}", e).red().to_string());
             }
+        }
     }
 
     fn add_akjocli_to_path() {

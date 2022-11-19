@@ -15,6 +15,7 @@ pub struct NewAction<'a> {
         }
     }
 
+    // TODO: Move these functions in a util module as they might be used in other actions
     pub fn is_non_alphabetic_uppercase(char: char) -> bool {
         !(char.is_alphabetic() && char.is_uppercase())
     }
